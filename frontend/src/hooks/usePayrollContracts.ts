@@ -28,32 +28,32 @@ export interface RevenueSplitResult {
 function parseBulkPaymentResult(raw: unknown): BulkPaymentResult {
   const data = raw as Record<string, unknown>;
   return {
-    totalRecipients: Number(data?.totalRecipients ?? 0),
-    successfulPayments: Number(data?.successfulPayments ?? 0),
-    failedPayments: Number(data?.failedPayments ?? 0),
-    transactionHash: String(data?.transactionHash ?? ''),
+    totalRecipients: typeof data?.totalRecipients === 'number' ? data.totalRecipients : 0,
+    successfulPayments: typeof data?.successfulPayments === 'number' ? data.successfulPayments : 0,
+    failedPayments: typeof data?.failedPayments === 'number' ? data.failedPayments : 0,
+    transactionHash: typeof data?.transactionHash === 'string' ? data.transactionHash : '',
   };
 }
 
 function parseVestingScheduleResult(raw: unknown): VestingScheduleResult {
   const data = raw as Record<string, unknown>;
   return {
-    scheduleId: String(data?.scheduleId ?? ''),
-    beneficiary: String(data?.beneficiary ?? ''),
-    totalAmount: String(data?.totalAmount ?? '0'),
-    startTime: Number(data?.startTime ?? 0),
-    endTime: Number(data?.endTime ?? 0),
-    releasedAmount: String(data?.releasedAmount ?? '0'),
+    scheduleId: typeof data?.scheduleId === 'string' ? data.scheduleId : '',
+    beneficiary: typeof data?.beneficiary === 'string' ? data.beneficiary : '',
+    totalAmount: typeof data?.totalAmount === 'string' ? data.totalAmount : '0',
+    startTime: typeof data?.startTime === 'number' ? data.startTime : 0,
+    endTime: typeof data?.endTime === 'number' ? data.endTime : 0,
+    releasedAmount: typeof data?.releasedAmount === 'string' ? data.releasedAmount : '0',
   };
 }
 
 function parseRevenueSplitResult(raw: unknown): RevenueSplitResult {
   const data = raw as Record<string, unknown>;
   return {
-    roundId: String(data?.roundId ?? ''),
-    totalDistributed: String(data?.totalDistributed ?? '0'),
-    participantCount: Number(data?.participantCount ?? 0),
-    transactionHash: String(data?.transactionHash ?? ''),
+    roundId: typeof data?.roundId === 'string' ? data.roundId : '',
+    totalDistributed: typeof data?.totalDistributed === 'string' ? data.totalDistributed : '0',
+    participantCount: typeof data?.participantCount === 'number' ? data.participantCount : 0,
+    transactionHash: typeof data?.transactionHash === 'string' ? data.transactionHash : '',
   };
 }
 
