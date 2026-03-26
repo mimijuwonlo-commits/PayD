@@ -96,7 +96,7 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
 
 ### 4️⃣ FX & Conversion System
 
-- **Real-time Rates**: Live asset-to-fiat conversion
+- **Real-time Rates**: Live asset-to-fiat conversion (see our [FX Rate Fetching Logic](docs/FX_RATE_FETCHING_LOGIC.md) for details on fallback and caching architecture).
 - **Anchor Fees**: Transparent withdrawal costs
 - **Network Fees**: Minimal Stellar transaction fees
 - **Multi-currency Support**: Support for various local currencies
