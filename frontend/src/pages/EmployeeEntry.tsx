@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Type assertion for Stellar components to work around library typing issues
-const AlertComponent = Alert as React.FC<any>;
-const InputComponent = Input as React.FC<any>;
-const SelectComponent = Select as React.FC<any>;
+const AlertComponent = Alert as unknown as React.FC<Record<string, unknown>>;
+const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
+const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
 
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { EmployeeList } from '../components/EmployeeList';
@@ -265,7 +265,7 @@ export default function EmployeeEntry() {
                 label="Preferred Payout Asset"
                 note="The employee will receive salary in this asset. A trustline must exist in their wallet."
                 value={formData.currency}
-                onChange={(e: any) => handleSelectChange('currency', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleSelectChange('currency', e.target.value)}
               >
                 {SUPPORTED_ASSETS.map((asset) => (
                   <option key={asset.code} value={asset.code}>

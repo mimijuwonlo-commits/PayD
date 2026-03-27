@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Type assertion for Stellar components to work around library typing issues
-const InputComponent = Input as React.FC<any>;
-const SelectComponent = Select as React.FC<any>;
+const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
+const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
 
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';

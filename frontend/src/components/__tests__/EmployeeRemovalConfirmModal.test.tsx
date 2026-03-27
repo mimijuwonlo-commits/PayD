@@ -3,10 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
+import type { i18n as I18nType } from 'i18next';
 import { EmployeeRemovalConfirmModal } from '../EmployeeRemovalConfirmModal';
 
 // Mock i18next
-const mockI18n = { language: 'en' };
+const mockI18n: Partial<I18nType> = { language: 'en' };
 
 vi.mock('react-i18next', async () => {
   const actual = await vi.importActual('react-i18next');
@@ -20,7 +21,7 @@ vi.mock('react-i18next', async () => {
 
 // Helper to render with i18n
 const renderWithI18n = (component: React.ReactElement) => {
-  return render(<I18nextProvider i18n={mockI18n as any}>{component}</I18nextProvider>);
+  return render(<I18nextProvider i18n={mockI18n as I18nType}>{component}</I18nextProvider>);
 };
 
 describe('EmployeeRemovalConfirmModal', () => {

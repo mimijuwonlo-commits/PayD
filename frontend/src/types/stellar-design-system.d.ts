@@ -6,7 +6,7 @@
 import React from 'react';
 
 declare module '@stellar/design-system' {
-  import type { ReactNode, ReactElement, FC } from 'react';
+  import type { ReactNode, FC } from 'react';
 
   // Button component
   export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

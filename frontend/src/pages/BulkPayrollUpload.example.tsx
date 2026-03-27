@@ -6,7 +6,6 @@
  *
  * File: pages/BulkPayrollUpload.tsx
  */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { useState, useCallback } from 'react';
 import { StrKey } from '@stellar/stellar-sdk';
@@ -17,7 +16,7 @@ import { useNotification } from '../hooks/useNotification';
 import { useWallet } from '../hooks/useWallet';
 
 // Type declaration for gtag (from Google Analytics)
-declare const gtag: ((command: string, action: string, data?: Record<string, any>) => void) | undefined;
+declare const gtag: ((command: string, action: string, data?: Record<string, unknown>) => void) | undefined;
 
 const REQUIRED_COLUMNS = ['name', 'wallet_address', 'amount', 'currency'];
 
