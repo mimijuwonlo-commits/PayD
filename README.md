@@ -167,6 +167,7 @@ For cloud hosting instructions, see the deployment guide:
 
 - [Vercel + Render Deployment Guide](docs/DEPLOYMENT_GUIDE_VERCEL_RENDER.md)
 - [Staging Environment Known Issues](docs/STAGING_ISSUES.md)
+- [Filenaming Conventions](docs/FILENAMING_CONVENTIONS.md)
 
 ## Getting Started
 
