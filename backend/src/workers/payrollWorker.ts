@@ -127,6 +127,7 @@ export const payrollWorker = new Worker<PayrollJobData>(
           // Build operations for this chunk
           const operations = [];
           
+
           for (const item of chunk) {
             if (!item.employee_wallet_address) {
               throw new Error(`Employee ${item.employee_id} has no wallet address`);
