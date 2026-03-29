@@ -39,7 +39,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
       emitBulkUpdate(batchId, 'processing', { progress: 0 });
 
       // 2. Prepare for blockchain transaction
-      // For this implementation, we use a single distribution account defined in env
       const distributionSecret = process.env.ORGUSD_DISTRIBUTION_SECRET;
       if (!distributionSecret) {
         throw new Error('ORGUSD_DISTRIBUTION_SECRET not configured on server');
@@ -47,10 +46,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
 
       const distributionKeypair = Keypair.fromSecret(distributionSecret);
       const assetCode = payroll_run.asset_code;
-
-      // Resolve the issuer from the centralized asset registry.
-      // For XLM (native) no issuer is needed; for any stablecoin (USDC,
-      // EURC, ORGUSD, …) the registry provides the correct address.
       const assetIssuer = assetCode !== 'XLM' ? getAssetIssuer(assetCode) : null;
 
       // 2a. Preflight balance check before execution for ORGUSD payroll runs.
@@ -124,7 +119,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
         logger.info(`Processing chunk ${i + 1}/${itemChunks.length} for run ${payrollRunId}`);
 
         try {
-          // Build operations for this chunk
           const operations = [];
           
 
@@ -139,7 +133,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
               parseFloat(item.amount)
             );
 
-            // If there are deductions, we record them and use the net amount for payment
             if (taxResult.total_tax > 0) {
               logger.info(`Applying tax deductions for employee ${item.employee_id}: Gross ${taxResult.gross_amount}, Tax ${taxResult.total_tax}, Net ${taxResult.net_amount}`);
               
@@ -148,7 +141,7 @@ export const payrollWorker = new Worker<PayrollJobData>(
                 await taxService.recordDeduction(
                   payroll_run.organization_id,
                   item.employee_id,
-                  null, // transactionId will be updated later if needed
+                  null,
                   deduction.rule_id,
                   taxResult.gross_amount,
                   deduction.deducted_amount,
@@ -174,12 +167,12 @@ export const payrollWorker = new Worker<PayrollJobData>(
           const account = await server.loadAccount(distributionKeypair.publicKey());
 
           const txBuilder = new TransactionBuilder(account, {
-            fee: (1000 * operations.length).toString(), // Adaptive fee for batch size
+            fee: (1000 * operations.length).toString(),
             networkPassphrase,
           });
 
           operations.forEach((op) => txBuilder.addOperation(op));
-          txBuilder.setTimeout(180); // Longer timeout for large batches
+          txBuilder.setTimeout(180);
 
           const tx = txBuilder.build();
           tx.sign(distributionKeypair);
@@ -239,7 +232,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
         } catch (chunkError: any) {
           logger.error(`Failed to process chunk ${i + 1} for run ${payrollRunId}`, chunkError);
 
-          // Mark items in this chunk as failed and log audit entries
           for (const item of chunk) {
             await PayrollBonusService.updateItemStatus(item.id, 'failed');
             
@@ -257,8 +249,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
             );
           }
 
-          // We continue with other chunks instead of failing the whole job immediately,
-          // but we will mark the run as failed at the end if any chunk fails.
           throw chunkError; // BullMQ will retry based on config
         }
       }
@@ -270,7 +260,6 @@ export const payrollWorker = new Worker<PayrollJobData>(
     } catch (error: any) {
       logger.error(`Critical failure in payroll worker for run ${payrollRunId}`, error);
 
-      // Update run status to failed if not already completed
       await PayrollBonusService.updatePayrollRunStatus(payrollRunId, 'failed');
 
       const summary = await PayrollBonusService.getPayrollRunSummary(payrollRunId);
@@ -280,12 +269,12 @@ export const payrollWorker = new Worker<PayrollJobData>(
         });
       }
 
-      throw error; // Rethrow so BullMQ knows it failed
+      throw error;
     }
   },
   {
     connection: redisConnection,
-    concurrency: 1, // Process one payroll run at a time to prevent sequence number issues
+    concurrency: 1,
   }
 );
 

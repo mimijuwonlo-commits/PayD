@@ -1,5 +1,6 @@
 import { payrollWorker } from './payrollWorker.js';
 import { notificationWorker } from './notificationWorker.js';
+import { schedulerWorker } from './schedulerWorker.js';
 import logger from '../utils/logger.js';
 
 export const startWorkers = () => {
