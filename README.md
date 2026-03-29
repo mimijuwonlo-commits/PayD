@@ -282,7 +282,7 @@ We'd like to extend a huge thank you to everyone who has contributed to making P
 
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors)
 
-## Credits
+## Credits.
 
 Special thanks to the builders, reviewers, testers, and maintainers who have helped shape PayD.
 See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the current list of recognized contributors and their contributions.
