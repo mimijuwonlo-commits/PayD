@@ -56,6 +56,11 @@ const allowedOrigins = buildAllowedOrigins();
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (allowedOrigins.size === 0) {
+      logger.error('CORS is misconfigured: no allowed origins were provided');
+      return callback(new Error('CORS: no allowed origins configured'));
+    }
+
     // Allow server-to-server requests (no Origin header) only in non-production.
     if (!origin) {
       if (envConfig.NODE_ENV !== 'production') return callback(null, true);
