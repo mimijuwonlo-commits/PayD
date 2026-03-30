@@ -29,7 +29,7 @@ export function TransactionNotificationExample() {
         status: 'confirmed',
         hash: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
       });
-    } catch (error) {
+    } catch {
       // Update to failed
       updateTransaction(txId, {
         status: 'failed',
@@ -41,7 +41,7 @@ export function TransactionNotificationExample() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Transaction Notification Example</h2>
-      <Button onClick={handlePayment}>Trigger Test Payment</Button>
+      <Button onClick={() => void handlePayment()}>Trigger Test Payment</Button>
     </div>
   );
 }

@@ -24,22 +24,25 @@ export function usePendingTransactions() {
     return newTx.id;
   }, []);
 
-  // Update transaction status
-  const updateTransaction = useCallback((id: string, updates: Partial<PendingTransaction>) => {
-    setTransactions((prev) => prev.map((tx) => (tx.id === id ? { ...tx, ...updates } : tx)));
-
-    // Auto-dismiss after delay if confirmed or failed
-    if (updates.status === 'confirmed' || updates.status === 'failed') {
-      setTimeout(() => {
-        dismissTransaction(id);
-      }, AUTO_DISMISS_DELAY);
-    }
-  }, []);
-
   // Dismiss a transaction
   const dismissTransaction = useCallback((id: string) => {
     setTransactions((prev) => prev.filter((tx) => tx.id !== id));
   }, []);
+
+  // Update transaction status
+  const updateTransaction = useCallback(
+    (id: string, updates: Partial<PendingTransaction>) => {
+      setTransactions((prev) => prev.map((tx) => (tx.id === id ? { ...tx, ...updates } : tx)));
+
+      // Auto-dismiss after delay if confirmed or failed
+      if (updates.status === 'confirmed' || updates.status === 'failed') {
+        setTimeout(() => {
+          dismissTransaction(id);
+        }, AUTO_DISMISS_DELAY);
+      }
+    },
+    [dismissTransaction]
+  );
 
   // Listen for WebSocket transaction updates
   useEffect(() => {

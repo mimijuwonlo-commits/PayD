@@ -23,15 +23,19 @@ export const TransactionPendingOverlay: React.FC<TransactionPendingOverlayProps>
   const [visible, setVisible] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const newVisible: Record<string, boolean> = {};
-    transactions.forEach((tx) => {
-      if (!(tx.id in visible)) {
-        newVisible[tx.id] = true;
-      }
+    setVisible((prev) => {
+      const newVisible = { ...prev };
+      let hasChanges = false;
+
+      transactions.forEach((tx) => {
+        if (!(tx.id in prev)) {
+          newVisible[tx.id] = true;
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? newVisible : prev;
     });
-    if (Object.keys(newVisible).length > 0) {
-      setVisible((prev) => ({ ...prev, ...newVisible }));
-    }
   }, [transactions]);
 
   const handleDismiss = (id: string) => {

@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, use, ReactNode } from 'react';
 import { usePendingTransactions } from '../hooks/usePendingTransactions';
 import type { PendingTransaction } from '../components/TransactionPendingOverlay';
 
@@ -15,12 +15,12 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
   const transactionState = usePendingTransactions();
 
   return (
-    <TransactionContext.Provider value={transactionState}>{children}</TransactionContext.Provider>
+    <TransactionContext value={transactionState}>{children}</TransactionContext>
   );
 }
 
 export function useTransactionNotifications() {
-  const context = useContext(TransactionContext);
+  const context = use(TransactionContext);
   if (!context) {
     throw new Error('useTransactionNotifications must be used within TransactionProvider');
   }
