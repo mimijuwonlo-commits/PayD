@@ -1,14 +1,22 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach, MockedFunction } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { useWalletManager } from '../../hooks/useWalletManager';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
 
 vi.mock('@creit.tech/stellar-wallets-kit', () => ({
-  StellarWalletsKit: vi.fn(function() { return {}; }),
+  StellarWalletsKit: vi.fn(function () {
+    return {};
+  }),
   WalletNetwork: { TESTNET: 'TESTNET', PUBLIC: 'PUBLIC' },
-  FreighterModule: vi.fn(function() { return {}; }),
-  xBullModule: vi.fn(function() { return {}; }),
-  LobstrModule: vi.fn(function() { return {}; }),
+  FreighterModule: vi.fn(function () {
+    return {};
+  }),
+  xBullModule: vi.fn(function () {
+    return {};
+  }),
+  LobstrModule: vi.fn(function () {
+    return {};
+  }),
   FREIGHTER_ID: 'freighter',
   LOBSTR_ID: 'lobstr',
 }));
@@ -19,8 +27,16 @@ vi.mock('../../hooks/useNotification', () => ({
   }),
 }));
 
+interface MockKitInstance {
+  setWallet: ReturnType<typeof vi.fn>;
+  getAddress: ReturnType<typeof vi.fn>;
+  getSupportedWallets: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+  signTransaction: ReturnType<typeof vi.fn>;
+}
+
 describe('useWalletManager', () => {
-  let mockKitInstance: any;
+  let mockKitInstance: MockKitInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,7 +48,9 @@ describe('useWalletManager', () => {
       disconnect: vi.fn(),
       signTransaction: vi.fn(),
     };
-    (StellarWalletsKit as unknown as ReturnType<typeof vi.fn>).mockImplementation(function() { return mockKitInstance; });
+    vi.mocked(StellarWalletsKit).mockImplementation(
+      () => mockKitInstance as unknown as StellarWalletsKit
+    );
   });
 
   it('initializes and attempts silent reconnect if wallet in localStorage', async () => {
@@ -40,7 +58,7 @@ describe('useWalletManager', () => {
     mockKitInstance.getAddress.mockResolvedValue({ address: 'G123' });
 
     const { result } = renderHook(() => useWalletManager());
-    
+
     // Initially connecting
     expect(result.current.isConnecting).toBe(true);
     expect(result.current.isInitialized).toBe(false);
@@ -56,13 +74,13 @@ describe('useWalletManager', () => {
 
   it('handles manual connect sequence appropriately', async () => {
     mockKitInstance.getSupportedWallets.mockResolvedValue([
-      { id: 'freighter', name: 'Freighter', isAvailable: true }
+      { id: 'freighter', name: 'Freighter', isAvailable: true },
     ]);
-    
+
     const { result } = renderHook(() => useWalletManager());
 
-    act(() => {
-      result.current.connect();
+    await act(async () => {
+      await result.current.connect();
     });
 
     await waitFor(() => {
@@ -72,8 +90,8 @@ describe('useWalletManager', () => {
 
     mockKitInstance.getAddress.mockResolvedValue({ address: 'G456' });
 
-    act(() => {
-      result.current.connectWithWallet('freighter');
+    await act(async () => {
+      await result.current.connectWithWallet('freighter');
     });
 
     await waitFor(() => {
@@ -83,10 +101,10 @@ describe('useWalletManager', () => {
     expect(result.current.walletName).toBe('freighter');
   });
 
-  it('handles disconnect', async () => {
+  it('handles disconnect', () => {
     const { result } = renderHook(() => useWalletManager());
 
-    await act(async () => {
+    act(() => {
       result.current.disconnect();
     });
 
