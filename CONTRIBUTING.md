@@ -197,6 +197,16 @@ CREATE TABLE IF NOT EXISTS organizations (
 );
 ```
 
+### File Naming
+
+- **React components**: Use `PascalCase` filenames such as `PayrollScheduler.tsx`
+- **Hooks and TypeScript implementation files**: Use `camelCase` filenames such as `usePayrollData.ts` and `payrollAuditService.ts`
+- **Static assets and path-oriented docs**: Use `kebab-case` filenames such as `payroll-summary-icon.svg`
+- **SQL migrations**: Use `NNN_snake_case.sql` filenames such as `025_add_metadata_to_payroll_items.sql`
+- **Legacy areas**: Preserve the existing directory pattern unless the change is a dedicated rename/refactor
+
+See [docs/FILENAMING_CONVENTIONS.md](docs/FILENAMING_CONVENTIONS.md) for the full naming matrix and migration guidance.
+
 ### Documentation
 
 - **Markdown**: Use clear headings, code blocks, and examples

@@ -1,7 +1,8 @@
 # PayD: Stellar-Based Cross-Border Payroll Platform!
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Stellar](https://img.shields.io/badge/Powered%20by-Stellar-7B68EE)](https://www.stellar.org/)
+[![Build Status](https://github.com/Gildado/PayD/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Gildado/PayD/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Stellar Compatible](https://img.shields.io/badge/Stellar-Compatible-08B5E5?style=flat-square&logo=stellar)](https://www.stellar.org/)
 
 ## License
 
@@ -81,7 +82,15 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
    docker-compose up
    ```
 
+
 For detailed setup instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Windows / WSL2 Setup
+For Windows users, we strongly recommend using WSL2 (Windows Subsystem for Linux).
+1. Install WSL2 by opening an Administrator PowerShell prompt and running `wsl --install`.
+2. Install Docker Desktop and enable the WSL2 backend in its settings.
+3. Open your WSL2 terminal (e.g. Ubuntu) and clone the repository there.
+4. Run all `npm` and `docker-compose` commands inside the WSL2 terminal to avoid permission and path length issues.
 
 ## 📚 Contribution Reward (Bounty) Program
 
@@ -257,8 +266,11 @@ STELLAR_SECRET_KEY=your_issuer_secret_key
 ANCHOR_API_KEY=your_anchor_service_key
 
 # JWT
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=<generate-a-random-32+-char-secret>
+JWT_REFRESH_SECRET=<generate-a-different-random-32+-char-secret>
 ```
+
+Rotate the JWT secrets in your platform environment whenever credentials are exposed or on your normal key-rotation schedule, then restart/redeploy the backend.
 
 ### Development
 

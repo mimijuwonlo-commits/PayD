@@ -107,6 +107,16 @@ npm start
 npm test
 ```
 
+**API docs**:
+
+```bash
+# Swagger UI
+http://localhost:3001/api-docs
+
+# Raw OpenAPI document
+http://localhost:3001/api/openapi.json
+```
+
 **Benchmarks**:
 
 ```bash
@@ -376,10 +386,16 @@ SDS_RETRY_ATTEMPTS=3
 ENABLE_CACHING=true
 CACHE_TTL=7200000
 LOG_LEVEL=info
+JWT_SECRET=<generate-a-random-32+-char-secret>
+JWT_REFRESH_SECRET=<generate-a-different-random-32+-char-secret>
 ```
+
+Rotate both JWT secrets through your hosting provider's environment variable settings and redeploy the backend so new tokens are issued with the updated keys.
 
 ## Documentation
 
+- Swagger UI is served at `/api-docs`.
+- The generated OpenAPI spec is exposed at `/api/openapi.json` and written to `backend/openapi.json` for client generation.
 - [SDS Integration Guide](./docs/SDS_INTEGRATION.md) - Complete SDS implementation details
 - [Indexing Strategy](./docs/INDEXING_STRATEGY.md) - Technical deep-dive on payroll indexing
 - [Benchmarking Results](./docs/BENCHMARKS.md) - Performance comparison data

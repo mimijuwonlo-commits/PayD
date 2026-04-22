@@ -5,27 +5,105 @@ import { useWalletManager } from '../hooks/useWalletManager';
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const walletManager = useWalletManager();
-  const {
-    address,
-    walletName,
-    network,
-    setNetwork,
-    isConnecting,
-    isInitialized,
-    walletExtensionAvailable,
-    connect,
-    requireWallet,
-    disconnect,
-    signTransaction,
-    walletModalOpen,
-    setWalletModalOpen,
-    walletOptions,
-    connectWithWallet: baseConnectWithWallet,
-  } = walletManager;
+  const { notifyWalletEvent } = useNotification();
 
-  const connectWithWallet = async (walletId: string) => {
+  useEffect(() => {
+    setWalletExtensionAvailable(hasAnyWalletExtension());
+
+    const newKit = new StellarWalletsKit({
+      network: network === 'TESTNET' ? WalletNetwork.TESTNET : WalletNetwork.PUBLIC,
+      modules: [new FreighterModule(), new xBullModule(), new LobstrModule()],
+    });
+    kitRef.current = newKit;
+
+    const attemptSilentReconnect = async () => {
+      const lastWalletName = localStorage.getItem(LAST_WALLET_STORAGE_KEY);
+      if (!lastWalletName) {
+        setIsInitialized(true);
+        return;
+      }
+
+      setWalletName(lastWalletName);
+      setIsConnecting(true);
+
+      try {
+        newKit.setWallet(lastWalletName);
+        const account = await withWalletConnectionTimeout(newKit.getAddress(), connectionTimeoutMs);
+        if (account?.address) {
+          setAddress(account.address);
+          notifyWalletEvent(
+            'reconnected',
+            `${account.address.slice(0, 6)}...${account.address.slice(-4)} via ${lastWalletName}`
+          );
+        }
+      } catch {
+        // Silent reconnection should not block app flow.
+      } finally {
+        setIsConnecting(false);
+        setIsInitialized(true);
+      }
+    };
+
+    void attemptSilentReconnect();
+  }, [connectionTimeoutMs, notifyWalletEvent, network]);
+
+  const loadWalletOptions = async (): Promise<SelectableWallet[]> => {
+    const kit = kitRef.current;
+    if (!kit) return [];
+    const supported = await kit.getSupportedWallets();
+    const options = supported
+      .filter((wallet) =>
+        SUPPORTED_MODAL_WALLETS.includes(wallet.id as (typeof SUPPORTED_MODAL_WALLETS)[number])
+      )
+      .map((wallet) => ({
+        id: wallet.id,
+        name: wallet.name,
+        icon: wallet.icon,
+        isAvailable: wallet.isAvailable,
+      }));
+    setWalletOptions(options);
+    setWalletExtensionAvailable(options.some((wallet) => wallet.isAvailable));
+    return options;
+  };
+
+  const connectWithWallet = async (selectedWalletId: string): Promise<string | null> => {
+    const kit = kitRef.current;
+    if (!kit) return null;
+
+    setConnectionError(null);
+    setIsConnecting(true);
+    try {
+      kit.setWallet(selectedWalletId);
+      const { address } = await withWalletConnectionTimeout(kit.getAddress(), connectionTimeoutMs);
+
+      setAddress(address);
+      setWalletName(selectedWalletId);
+      localStorage.setItem(LAST_WALLET_STORAGE_KEY, selectedWalletId);
+      setConnectionError(null);
+      setWalletModalOpen(false);
+      notifyWalletEvent(
+        'connected',
+        `${address.slice(0, 6)}...${address.slice(-4)} via ${selectedWalletId}`
+      );
+      return address;
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      const message =
+        error instanceof Error ? error.message : 'Unable to connect to the selected wallet.';
+      setConnectionError(message);
+      notifyWalletEvent('connection_failed', message);
+      return null;
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const connect = async (): Promise<string | null> => {
+    const options = await loadWalletOptions();
+    if (options.length === 0) {
+      notifyWalletEvent('connection_failed', 'No supported wallet providers were found.');
+      return null;
+    }
     setConnectionError(null);
     const result = await baseConnectWithWallet(walletId);
     if (!result) {
@@ -87,7 +165,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 >
                   <div className="flex items-center gap-3">
                     {wallet.icon ? (
-                      <img src={wallet.icon} alt={wallet.name} className="h-6 w-6 rounded" />
+                      <img
+                        src={wallet.icon}
+                        alt={wallet.name}
+                        loading="lazy"
+                        className="h-6 w-6 rounded"
+                      />
                     ) : (
                       <div className="h-6 w-6 rounded bg-white/10" />
                     )}
