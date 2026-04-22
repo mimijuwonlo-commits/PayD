@@ -3,10 +3,14 @@ import { createServer } from 'http';
 import app from './app.js';
 import logger from './utils/logger.js';
 import config from './config/index.js';
+import { assertJwtSecretsSecure } from './utils/jwtSecurity.js';
 import { initializeSocket } from './services/socketService.js';
 import { startWorkers } from './workers/index.js';
 
 dotenv.config();
+
+// #457 — Abort startup immediately if JWT secrets are insecure
+assertJwtSecretsSecure(process.env);
 
 const server = createServer(app);
 

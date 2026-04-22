@@ -6,6 +6,7 @@ import { Pool } from 'pg';
 import { config } from '../config/env.js';
 import jwt from 'jsonwebtoken';
 import { validatePasswordStrength } from '../utils/passwordStrength.js';
+import { apiErrorResponse, ErrorCodes } from '../utils/apiError.js';
 
 const pool = new Pool({ connectionString: config.DATABASE_URL });
 
@@ -30,22 +31,21 @@ export class AuthController {
     };
 
     if (!organizationName || !email || !password) {
-      return res.status(400).json({
-        error: 'Missing required fields: organizationName, email, password.',
-      });
+      return res.status(400).json(
+        apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing required fields: organizationName, email, password.')
+      );
     }
 
     const emailNorm = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-      return res.status(400).json({ error: 'Invalid email address.' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Invalid email address.'));
     }
 
     // ── Password strength check ─────────────────────────────────────────────
     const strength = validatePasswordStrength(password, emailNorm);
     if (!strength.valid) {
       return res.status(422).json({
-        error: 'Password does not meet complexity requirements.',
-        details: strength.errors,
+        ...apiErrorResponse(ErrorCodes.UNPROCESSABLE, 'Password does not meet complexity requirements.', strength.errors),
         score: strength.score,
       });
     }
@@ -53,7 +53,9 @@ export class AuthController {
     try {
       const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [emailNorm]);
       if (existingUser.rows.length > 0) {
-        return res.status(409).json({ error: 'An account with this email already exists.' });
+        return res
+          .status(409)
+          .json(apiErrorResponse(ErrorCodes.CONFLICT, 'An account with this email already exists.'));
       }
 
       // Hash the password before storing (bcrypt-equivalent; using scrypt here to
@@ -112,7 +114,7 @@ export class AuthController {
         client.release();
       }
     } catch (error: any) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json(apiErrorResponse(ErrorCodes.INTERNAL_ERROR, error.message));
     }
   }
   /**
@@ -123,7 +125,7 @@ export class AuthController {
   static async setup2fa(req: express.Request, res: express.Response) {
     const { walletAddress } = req.body;
     if (!walletAddress) {
-      return res.status(400).json({ error: 'Missing walletAddress' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing walletAddress'));
     }
 
     try {
@@ -159,7 +161,7 @@ export class AuthController {
         recoveryCodes,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json(apiErrorResponse(ErrorCodes.INTERNAL_ERROR, error.message));
     }
   }
 
@@ -170,7 +172,7 @@ export class AuthController {
   static async verify2fa(req: express.Request, res: express.Response) {
     const { walletAddress, token } = req.body;
     if (!walletAddress || !token) {
-      return res.status(400).json({ error: 'Missing parameters' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing parameters'));
     }
 
     try {
@@ -179,7 +181,7 @@ export class AuthController {
         [walletAddress]
       );
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json(apiErrorResponse(ErrorCodes.NOT_FOUND, 'User not found'));
       }
 
       const user = result.rows[0];
@@ -219,10 +221,10 @@ export class AuthController {
           message: '2FA verified successfully',
         });
       } else {
-        res.status(401).json({ error: 'Invalid 2FA token' });
+        res.status(401).json(apiErrorResponse(ErrorCodes.UNAUTHORIZED, 'Invalid 2FA token'));
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json(apiErrorResponse(ErrorCodes.INTERNAL_ERROR, error.message));
     }
   }
 
@@ -233,7 +235,7 @@ export class AuthController {
   static async disable2fa(req: express.Request, res: express.Response) {
     const { walletAddress, token } = req.body;
     if (!walletAddress || !token) {
-      return res.status(400).json({ error: 'Missing requirements tracking bounds' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing required fields: walletAddress, token'));
     }
 
     try {
@@ -244,7 +246,7 @@ export class AuthController {
       if (result.rows.length === 0 || !result.rows[0].is_2fa_enabled) {
         return res
           .status(400)
-          .json({ error: '2FA is not structurally fully enabled over the user correctly parsing' });
+          .json(apiErrorResponse(ErrorCodes.BAD_REQUEST, '2FA is not enabled for this user'));
       }
 
       const { totp_secret } = result.rows[0];
@@ -255,12 +257,12 @@ export class AuthController {
           'UPDATE users SET is_2fa_enabled = false, totp_secret = NULL, recovery_codes = NULL WHERE wallet_address = $1',
           [walletAddress]
         );
-        res.json({ success: true, message: '2FA removed flawlessly properly' });
+        res.json({ success: true, message: '2FA disabled successfully' });
       } else {
-        res.status(401).json({ error: 'Invalid 2FA token limiting disable structurally' });
+        res.status(401).json(apiErrorResponse(ErrorCodes.UNAUTHORIZED, 'Invalid 2FA token'));
       }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json(apiErrorResponse(ErrorCodes.INTERNAL_ERROR, error.message));
     }
   }
   /**
@@ -270,7 +272,7 @@ export class AuthController {
   static async login(req: express.Request, res: express.Response) {
     const { walletAddress } = req.body;
     if (!walletAddress) {
-      return res.status(400).json({ error: 'Missing walletAddress' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing walletAddress'));
     }
 
     try {
@@ -339,7 +341,7 @@ export class AuthController {
   static async refresh(req: express.Request, res: express.Response) {
     const { refreshToken } = req.body;
     if (!refreshToken) {
-      return res.status(400).json({ error: 'Missing refresh token' });
+      return res.status(400).json(apiErrorResponse(ErrorCodes.BAD_REQUEST, 'Missing refresh token'));
     }
 
     try {
@@ -350,7 +352,7 @@ export class AuthController {
       );
 
       if (result.rows.length === 0 || result.rows[0].refresh_token !== refreshToken) {
-        return res.status(401).json({ error: 'Invalid refresh token' });
+        return res.status(401).json(apiErrorResponse(ErrorCodes.UNAUTHORIZED, 'Invalid refresh token'));
       }
 
       const user = result.rows[0];
@@ -368,7 +370,7 @@ export class AuthController {
 
       res.json({ accessToken });
     } catch (error) {
-      res.status(401).json({ error: 'Invalid or expired refresh token' });
+      res.status(401).json(apiErrorResponse(ErrorCodes.UNAUTHORIZED, 'Invalid or expired refresh token'));
     }
   }
 }

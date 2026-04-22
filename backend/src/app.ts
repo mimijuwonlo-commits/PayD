@@ -22,6 +22,7 @@ import authRoutes from './routes/authRoutes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import { HealthController } from './controllers/healthController.js';
+import { apiErrorResponse, ErrorCodes } from './utils/apiError.js';
 
 // Legacy Routes
 import payrollAuditRoutes from './routes/payrollAuditRoutes.js';
@@ -142,7 +143,7 @@ app.get('/health', HealthController.getHealthStatus);
 // ─── 404 ─────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
-    error: 'Not Found',
+    ...apiErrorResponse(ErrorCodes.NOT_FOUND, `Route ${req.method} ${req.path} not found`),
     path: req.path,
   });
 });
@@ -154,9 +155,11 @@ app.use(errorLogger);
 app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', err);
   res.status(500).json({
-    error: 'Internal Server Error',
+    ...apiErrorResponse(
+      ErrorCodes.INTERNAL_ERROR,
+      config.nodeEnv === 'development' ? err.message : 'An unexpected error occurred'
+    ),
     requestId: req.requestId,
-    message: config.nodeEnv === 'development' ? err.message : 'An error occurred',
   });
 });
 
