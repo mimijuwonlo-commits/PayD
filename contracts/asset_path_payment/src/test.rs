@@ -76,3 +76,102 @@ fn test_bump_ttl() {
     env.mock_all_auths();
     client.bump_ttl();
 }
+
+#[test]
+fn test_initiate_path_payment_rejects_invalid_amounts() {
+    let (env, contract_id) = create_contract();
+    let from = Address::generate(&env);
+    let to = Address::generate(&env);
+    let source_asset = Address::generate(&env);
+    let dest_asset = Address::generate(&env);
+
+    env.mock_all_auths();
+    env.as_contract(&contract_id, || {
+        let result = AssetPathPaymentContract::initiate_path_payment(
+            env.clone(),
+            from.clone(),
+            to.clone(),
+            source_asset.clone(),
+            dest_asset.clone(),
+            0,
+            10,
+            10,
+            vec![&env],
+        );
+        assert_eq!(result, Err(PathPaymentError::InvalidAmount));
+    });
+
+    env.as_contract(&contract_id, || {
+        let result = AssetPathPaymentContract::initiate_path_payment(
+            env.clone(),
+            from,
+            to,
+            source_asset,
+            dest_asset,
+            10,
+            9,
+            5,
+            vec![&env],
+        );
+        assert_eq!(result, Err(PathPaymentError::SlippageExceeded));
+    });
+}
+
+#[test]
+fn test_complete_path_payment_rejects_unknown_payment() {
+    let env = Env::default();
+    let contract_id = env.register(AssetPathPaymentContract, ());
+    let admin = Address::generate(&env);
+
+    env.as_contract(&contract_id, || {
+        AssetPathPaymentContract::init(env.clone(), admin);
+    });
+
+    env.mock_all_auths();
+    env.as_contract(&contract_id, || {
+        let result = AssetPathPaymentContract::complete_path_payment(env.clone(), 999, 100, 95);
+        assert_eq!(result, Err(PathPaymentError::PaymentNotFound));
+    });
+}
+
+#[test]
+fn test_fail_path_payment_rejects_unknown_payment() {
+    let env = Env::default();
+    let contract_id = env.register(AssetPathPaymentContract, ());
+    let admin = Address::generate(&env);
+
+    env.as_contract(&contract_id, || {
+        AssetPathPaymentContract::init(env.clone(), admin);
+    });
+
+    env.mock_all_auths();
+    env.as_contract(&contract_id, || {
+        let result = AssetPathPaymentContract::fail_path_payment(
+            env.clone(),
+            999,
+            PathPaymentError::PathNotFound as u32,
+            String::from_str(&env, "Path not found"),
+            false,
+        );
+        assert_eq!(result, Err(PathPaymentError::PaymentNotFound));
+    });
+}
+
+#[test]
+fn test_withdraw_rejects_non_positive_amounts() {
+    let env = Env::default();
+    let contract_id = env.register(AssetPathPaymentContract, ());
+    let admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let asset = Address::generate(&env);
+
+    env.as_contract(&contract_id, || {
+        AssetPathPaymentContract::init(env.clone(), admin);
+    });
+
+    env.mock_all_auths();
+    env.as_contract(&contract_id, || {
+        let result = AssetPathPaymentContract::withdraw(env.clone(), asset, 0, recipient);
+        assert_eq!(result, Err(PathPaymentError::InvalidAmount));
+    });
+}
